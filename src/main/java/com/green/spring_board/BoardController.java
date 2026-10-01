@@ -1,9 +1,11 @@
 package com.green.spring_board;
 
 import lombok.AllArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
+import java.net.URI;
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/board")
@@ -13,51 +15,102 @@ public class BoardController {
 
     // 전체 조회
     @GetMapping
-    public List<Boards> getBoards() {
-        return boardRepository.findAll();
+    public ResponseEntity<List<Boards>> getBoards() {
+        return ResponseEntity.ok(boardRepository.findAll());
+        // return boardRepository.findAll();  <- 데이터만
     }
 
     // 상세 조회
     @GetMapping("/{id}")
-    public Boards getBoardDetail(@PathVariable int id) {
-        Boards board = boardRepository.findById(id).get();
+    public ResponseEntity<Boards> getBoardDetail(@PathVariable int id) {
+        Optional<Boards> optionalboard = boardRepository.findById(id);
+        if(optionalboard.isEmpty()) {
+            // 요청한 게시글을 찾지 못한 경우
+            return ResponseEntity.notFound().build();
+        }
+
+        Boards board = optionalboard.get();
+
         board.setHits(board.getHits() + 1);
         boardRepository.save(board);
 
-        return board;
+        return ResponseEntity.ok(board);
     }
 
     // 삽입
     @PostMapping
-    public void createBoard(@RequestBody BoardCreateRequest boardCreateRequest) {
-        System.out.println(boardCreateRequest.getTitle());
-        System.out.println(boardCreateRequest.getContent());
-
+    public ResponseEntity<Boards> createBoard(@RequestBody BoardCreateRequest boardCreateRequest) {
+        if(boardCreateRequest.getTitle() == null || boardCreateRequest.getTitle().isBlank()) {
+            return ResponseEntity.badRequest().build();
+        }
+        if(boardCreateRequest.getContent() == null || boardCreateRequest.getContent().isBlank()) {
+            return ResponseEntity.badRequest().build();
+        }
         Boards board = new Boards();
         board.setTitle(boardCreateRequest.getTitle());
         board.setContent(boardCreateRequest.getContent());
 
-        boardRepository.save(board);
+        Boards saveBoard = boardRepository.save(board);
+        int newBoardId = saveBoard.getId();
+        URI location = URI.create("/api/board/" + newBoardId);
+
+        return ResponseEntity.created(location).body(board);
     }
+
+//    // 수정
+//    @PatchMapping("/{id}")
+//    public ResponseEntity<Void> updateBoard(@PathVariable int id,
+//                                            @RequestBody BoardCreateRequest boardCreateRequest) {
+//        Boards board = boardRepository.findById(id).orElse(null);
+//        if (board != null) {
+//            if (boardCreateRequest.getTitle() != null) {
+//                board.setTitle(boardCreateRequest.getTitle());
+//            }
+//            if (boardCreateRequest.getContent() != null) {
+//                board.setContent(boardCreateRequest.getContent());
+//            }
+//            boardRepository.save(board);
+//        }
+//        return ResponseEntity.ok().build();
+//    }
 
     // 수정
     @PatchMapping("/{id}")
-    public void updateBoard(@PathVariable int id, @RequestBody BoardCreateRequest boardCreateRequest) {
-        Boards board = boardRepository.findById(id).orElse(null);
-        if (board != null) {
-            if(boardCreateRequest.getTitle() != null) {
-                board.setTitle(boardCreateRequest.getTitle());
-            }
-            if(boardCreateRequest.getContent() != null) {
-                board.setContent(boardCreateRequest.getContent());
-            }
-            boardRepository.save(board);
+    public ResponseEntity<Boards> updateBoard(@PathVariable int id,
+                                              @RequestBody BoardCreateRequest boardCreateRequest) {
+        // 1. 대상 리소스 존재 여부 확인 (삭제 메서드 스타일)
+        Optional<Boards> optionalBoard = boardRepository.findById(id);
+        if (optionalBoard.isEmpty()) {
+            return ResponseEntity.notFound().build();
         }
+
+        boolean hasTitle = boardCreateRequest.getTitle() != null && !boardCreateRequest.getTitle().isBlank();
+        boolean hasContent = boardCreateRequest.getContent() != null && !boardCreateRequest.getContent().isBlank();
+
+        if (!hasTitle && !hasContent) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        Boards board = optionalBoard.get();
+
+        if (hasTitle) {
+            board.setTitle(boardCreateRequest.getTitle());
+        }
+        if (hasContent) {
+            board.setContent(boardCreateRequest.getContent());
+        }
+        Boards updatedBoard = boardRepository.save(board);
+        return ResponseEntity.ok(updatedBoard);
     }
 
     // 삭제
     @DeleteMapping("/{id}")
-    public void deleteBoard(@PathVariable int id) {
+    public ResponseEntity<Void> deleteBoard(@PathVariable int id) {
+        boolean isExist = boardRepository.existsById(id);
+        if (!isExist) {
+            return ResponseEntity.notFound().build();
+        }
         boardRepository.deleteById(id);
+        return ResponseEntity.noContent().build();
     }
 }
