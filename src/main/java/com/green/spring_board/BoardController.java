@@ -78,7 +78,6 @@ public class BoardController {
     @PatchMapping("/{id}")
     public ResponseEntity<Boards> updateBoard(@PathVariable int id,
                                               @RequestBody BoardCreateRequest boardCreateRequest) {
-        // 1. 대상 리소스 존재 여부 확인 (삭제 메서드 스타일)
         Optional<Boards> optionalBoard = boardRepository.findById(id);
         if (optionalBoard.isEmpty()) {
             return ResponseEntity.notFound().build();
