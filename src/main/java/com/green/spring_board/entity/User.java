@@ -35,4 +35,5 @@ public class User {
 
     @Column(nullable = false, insertable = false, updatable = false)
     private LocalDateTime updatedDatetime;
+
 }

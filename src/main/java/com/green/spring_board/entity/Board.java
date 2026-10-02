@@ -35,4 +35,8 @@ public class Board {
     @Column(nullable = false, insertable = false, updatable = false)
     // insertable = false, updatable = false 삽입할 데이터 아니니까 무시하고 when 조회나 업데이트와 같은 행동을 할 때
     private LocalDateTime updatedDatetime;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
 }
