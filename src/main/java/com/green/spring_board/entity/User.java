@@ -5,6 +5,9 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.data.annotation.CreatedDate;
+
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "users")
@@ -26,4 +29,10 @@ public class User {
 
     @Column(nullable = false)
     private String password;
+
+    @Column(nullable = false, insertable = false, updatable = false)
+    private LocalDateTime createdDatetime;
+
+    @Column(nullable = false, insertable = false, updatable = false)
+    private LocalDateTime updatedDatetime;
 }

@@ -52,6 +52,7 @@ public class BoardController {
         } catch (UserRequestException e) {
             return ResponseEntity.badRequest().build();
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.internalServerError().build();
         }
     }
