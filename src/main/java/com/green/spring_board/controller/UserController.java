@@ -7,11 +7,11 @@ import com.green.spring_board.exceptions.ResourceConflictException;
 import com.green.spring_board.exceptions.ResourceNotFoundException;
 import com.green.spring_board.exceptions.UnauthenticatedExecption;
 import com.green.spring_board.exceptions.UserRequestException;
+import com.green.spring_board.repository.UserRepository;
 import com.green.spring_board.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import lombok.AllArgsConstructor;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,8 +20,9 @@ import org.springframework.web.bind.annotation.*;
 @AllArgsConstructor
 public class UserController {
     private final UserService userService;
+    private final UserRepository userRepository;
 
-    @PostMapping
+    @PostMapping("/signup")
     public ResponseEntity<Void> signup(@RequestBody SignupRequest signupRequest) {
         try {
             userService.signup(signupRequest);
@@ -58,20 +59,37 @@ public class UserController {
     @GetMapping("/me")
     public ResponseEntity<MyInfoResponse> getCurrentUser(
             HttpServletRequest httpServletRequest) {
-        // 1. 이 사람의 세션을 가쟈옴
-
-        /*"me"는 회원 전용 서비스다.
-        이 사람의 세션이 없으면, 새로 만들어주는게 아니라 내쫓아야 함
-        그래서 세션이 없다고 세션을 만들지 않도록 getSession 안에 (false) 옵션을 추가한다.*/
-
+        // 1. 이 사람의 세션을 가져옴
         HttpSession session = httpServletRequest.getSession(false);
         if (session == null || session.getAttribute("userId") == null) {
             return ResponseEntity.status(401).build();
         }
-        // 2. 세션에서 유저 아이디 뽑아옴
 
-        // 3. 유저 아이디로 DB 조회함
-        // 4. DB에서 이 유저의 닉네임과 이메일을 받아옴
-        // 5. 돌려줌.
+        // 2. 세션에서 유저 아이디 뽑아옴
+        int userId = (int) session.getAttribute("userId");
+
+        try {
+            MyInfoResponse response = userService.getUserInfo(userId);
+            return ResponseEntity.ok().body(response);
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(HttpServletRequest request) {
+        // 1. 기존 세션 가져오기 (없으면 새로 만들지 않음)
+        HttpSession session = request.getSession(false);
+
+        // 2. 세션이 없거나 세션 내 userId가 없는 경우 401 Unauthorized 반환
+        if (session == null || session.getAttribute("userId") == null) {
+            return ResponseEntity.status(401).build();
+        }
+
+        // 3. 세션 무효화 (로그아웃 처리)
+        session.invalidate();
+        return ResponseEntity.ok().build();
     }
 }

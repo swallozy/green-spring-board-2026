@@ -1,6 +1,7 @@
 package com.green.spring_board.service;
 
 import com.green.spring_board.dto.LoginRequest;
+import com.green.spring_board.dto.MyInfoResponse;
 import com.green.spring_board.dto.SignupRequest;
 import com.green.spring_board.entity.User;
 import com.green.spring_board.exceptions.ResourceConflictException;
@@ -8,11 +9,11 @@ import com.green.spring_board.exceptions.UnauthenticatedExecption;
 import com.green.spring_board.exceptions.UserRequestException;
 import com.green.spring_board.repository.UserRepository;
 import lombok.AllArgsConstructor;
+import lombok.Setter;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.Optional;
 
@@ -53,10 +54,28 @@ public class UserService {
 
         User user = userOptional.get();
         // 2. 비밀번호가 올바른지 확인
-        if(passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
+        if(!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
             throw new UnauthenticatedExecption("Wrong password");
         }
         // 3. 로그인 성공
         return user.getId();
+    }
+
+    public MyInfoResponse getUserInfo(int userId) {
+        Optional<User> userOptional = userRepository.findById(userId);
+        if(userOptional.isEmpty()) {
+            throw new ResourceConflictException("User not found");
+        }
+        User user = userOptional.get();
+
+        // 4. DB에서 이 유저의 닉네임과 이메일을 받아옴
+        String email = user.getEmail();
+        String nickname = user.getNickname();
+
+        // 5. 돌려줌.
+        MyInfoResponse myInfoResponse = new MyInfoResponse();
+        myInfoResponse.setEmail(email);
+        myInfoResponse.setNickname(nickname);
+        return myInfoResponse;
     }
 }
