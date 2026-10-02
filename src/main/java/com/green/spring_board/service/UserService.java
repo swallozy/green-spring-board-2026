@@ -5,6 +5,7 @@ import com.green.spring_board.dto.MyInfoResponse;
 import com.green.spring_board.dto.SignupRequest;
 import com.green.spring_board.entity.User;
 import com.green.spring_board.exceptions.ResourceConflictException;
+import com.green.spring_board.exceptions.ResourceNotFoundException;
 import com.green.spring_board.exceptions.UnauthenticatedExecption;
 import com.green.spring_board.exceptions.UserRequestException;
 import com.green.spring_board.repository.UserRepository;
@@ -77,5 +78,35 @@ public class UserService {
         myInfoResponse.setEmail(email);
         myInfoResponse.setNickname(nickname);
         return myInfoResponse;
+    }
+
+
+    public void updateUserInfo(int userId, MyInfoResponse dto) {
+        User user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        if (dto.getEmail() != null && !dto.getEmail().isBlank()) {
+            String newEmail = dto.getEmail();
+
+            // 이미 다른 누군가가 그 이메일을 쓰고 있다면 409 예외 발생
+            if (userRepository.existsByEmail(newEmail)) {
+                throw new ResourceConflictException("Email already exists");
+            }
+            // 중복이 아니면 이메일 교체
+            user.setEmail(newEmail);
+        }
+        // 6. 닉네임 수정 요청이 들어온 경우
+        // - 클라이언트가 보낸 nickname이 null이 아니고 공백이 아닐 때만 교체
+        if (dto.getNickname() != null && !dto.getNickname().isBlank()) {
+            user.setNickname(dto.getNickname());
+        }
+        userRepository.save(user);
+    }
+
+    public void deleteUser(int userId) {
+        Optional<User> userOptional = userRepository.findById(userId);
+        if(userOptional.isEmpty()) {
+            throw new ResourceNotFoundException("User not found");
+        }
+        User user = userOptional.get();
+        userRepository.delete(user);
     }
 }
