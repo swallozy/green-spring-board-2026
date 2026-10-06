@@ -11,13 +11,10 @@ import lombok.Setter;
 @NoArgsConstructor
 @Getter
 @Setter
-
-public class LoginRequest {
-    @NotBlank
+public class BoardUpdateRequest {
     @Size(min = 10, max = 50)
-    private String email;
+    private String title;
 
-    @NotBlank
     @Size(min = 10)
-    private String password;
+    private String content;
 }

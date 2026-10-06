@@ -3,6 +3,7 @@ package com.green.spring_board.service;
 import com.green.spring_board.dto.LoginRequest;
 import com.green.spring_board.dto.MyInfoResponse;
 import com.green.spring_board.dto.SignupRequest;
+import com.green.spring_board.dto.UserUpdateRequest;
 import com.green.spring_board.entity.User;
 import com.green.spring_board.exceptions.ResourceConflictException;
 import com.green.spring_board.exceptions.ResourceNotFoundException;
@@ -81,7 +82,7 @@ public class UserService {
     }
 
 
-    public void updateUserInfo(int userId, MyInfoResponse dto) {
+    public void updateUserInfo(int userId, UserUpdateRequest dto) {
         User user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("User not found"));
         if (dto.getEmail() != null && !dto.getEmail().isBlank()) {
             String newEmail = dto.getEmail();

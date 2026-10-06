@@ -3,6 +3,7 @@ package com.green.spring_board.controller;
 import com.green.spring_board.dto.LoginRequest;
 import com.green.spring_board.dto.MyInfoResponse;
 import com.green.spring_board.dto.SignupRequest;
+import com.green.spring_board.dto.UserUpdateRequest;
 import com.green.spring_board.entity.User;
 import com.green.spring_board.exceptions.ResourceConflictException;
 import com.green.spring_board.exceptions.ResourceNotFoundException;
@@ -13,6 +14,7 @@ import com.green.spring_board.service.UserService;
 import jakarta.servlet.ServletSecurityElement;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -27,7 +29,7 @@ public class UserController {
     private final UserRepository userRepository;
 
     @PostMapping("/signup")
-    public ResponseEntity<Void> signup(@RequestBody SignupRequest signupRequest) {
+    public ResponseEntity<Void> signup(@Valid @RequestBody SignupRequest signupRequest) {
         try {
             userService.signup(signupRequest);
             return ResponseEntity.ok().build();
@@ -42,8 +44,9 @@ public class UserController {
 
     @PostMapping("/login")
     public ResponseEntity<Void> login(
-            @RequestBody LoginRequest loginRequest,
-            HttpServletRequest httpServletRequest) {
+            @Valid @RequestBody LoginRequest loginRequest,
+            HttpServletRequest httpServletRequest)
+    {
         try {
             int userId = userService.login(loginRequest);
             HttpSession session = httpServletRequest.getSession();
@@ -97,10 +100,10 @@ public class UserController {
         return ResponseEntity.ok().build();
     }
 
-    @PatchMapping("/me")
+    @PatchMapping("/Update")
     public ResponseEntity<Void> updateUserInfo(
             HttpServletRequest request,
-            @RequestBody MyInfoResponse myInfoResponse)
+            @Valid @RequestBody UserUpdateRequest userUpdateRequest)
     {
         HttpSession session = request.getSession(false);
         if (session == null || session.getAttribute("userId") == null) {
@@ -110,7 +113,7 @@ public class UserController {
         int userId = (int) session.getAttribute("userId");
 
         try {
-            userService.updateUserInfo(userId, myInfoResponse);
+            userService.updateUserInfo(userId, userUpdateRequest);
             return ResponseEntity.ok().build(); // 성공 시 200 OK
         } catch (ResourceNotFoundException e) {
             return ResponseEntity.notFound().build(); // 유저가 없으면 404
