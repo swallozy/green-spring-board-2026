@@ -71,13 +71,6 @@ public class BoardService {
     }
 
     public int createBoard(BoardCreateRequest boardCreateRequest, Integer userId) {
-        if(boardCreateRequest.getTitle() == null || boardCreateRequest.getTitle().isBlank()) {
-            throw new UserRequestException("잘못된 입력값 입니다.");
-        }
-        if(boardCreateRequest.getContent() == null || boardCreateRequest.getContent().isBlank()) {
-            throw new UserRequestException("잘못된 입력값 입니다.");
-        }
-
         // userId 유효성 체크 (해당 userId의 유저가 정상적으로 존재하는지)
         // TODO :: 이후 삭제/탈퇴 유저에 대한 검증도 추가 필요
         Optional<User> user = userRepository.findById(userId);
@@ -102,14 +95,12 @@ public class BoardService {
 
         Board board = optionalBoard.get();
 
-        if (boardUpdateRequest.getTitle() == null || boardUpdateRequest.getTitle().isBlank()) {
-
+        if (boardUpdateRequest.getTitle() != null && !boardUpdateRequest.getTitle().isBlank()) {
+            board.setTitle(boardUpdateRequest.getTitle());
         }
-        if (boardUpdateRequest.getContent() == null || boardUpdateRequest.getContent().isBlank()) {
-
+        if (boardUpdateRequest.getContent() != null && !boardUpdateRequest.getContent().isBlank()) {
+            board.setContent(boardUpdateRequest.getContent());
         }
-        board.setTitle(boardUpdateRequest.getTitle());
-        board.setContent(boardUpdateRequest.getContent());
 
         boardRepository.save(board);
     }

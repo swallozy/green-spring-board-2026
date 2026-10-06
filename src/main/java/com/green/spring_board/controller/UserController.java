@@ -30,16 +30,8 @@ public class UserController {
 
     @PostMapping("/signup")
     public ResponseEntity<Void> signup(@Valid @RequestBody SignupRequest signupRequest) {
-        try {
-            userService.signup(signupRequest);
-            return ResponseEntity.ok().build();
-        } catch (ResourceConflictException e) {
-            return ResponseEntity.status(409).build();
-        } catch (UserRequestException e) {
-            return ResponseEntity.badRequest().build();
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().build();
-        }
+        userService.signup(signupRequest);
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping("/login")
@@ -47,20 +39,11 @@ public class UserController {
             @Valid @RequestBody LoginRequest loginRequest,
             HttpServletRequest httpServletRequest)
     {
-        try {
-            int userId = userService.login(loginRequest);
-            HttpSession session = httpServletRequest.getSession();
-            httpServletRequest.changeSessionId();
-            session.setAttribute("userId", userId);
-            return ResponseEntity.ok().build();
-
-        } catch (ResourceNotFoundException e) {
-            return ResponseEntity.notFound().build();
-        } catch (UnauthenticatedExecption e) {
-            return ResponseEntity.status(401).build();
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().build();
-        }
+        int userId = userService.login(loginRequest);
+        HttpSession session = httpServletRequest.getSession();
+        httpServletRequest.changeSessionId();
+        session.setAttribute("userId", userId);
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping("/me")
@@ -69,20 +52,14 @@ public class UserController {
         // 1. 이 사람의 세션을 가져옴
         HttpSession session = httpServletRequest.getSession(false);
         if (session == null || session.getAttribute("userId") == null) {
-            return ResponseEntity.status(401).build();
+            throw new UnauthenticatedExecption("로그인이 필요합니다");
         }
 
         // 2. 세션에서 유저 아이디 뽑아옴
         int userId = (int) session.getAttribute("userId");
 
-        try {
-            MyInfoResponse response = userService.getUserInfo(userId);
-            return ResponseEntity.ok().body(response);
-        } catch (ResourceNotFoundException e) {
-            return ResponseEntity.notFound().build();
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().build();
-        }
+        MyInfoResponse response = userService.getUserInfo(userId);
+        return ResponseEntity.ok().body(response);
     }
 
     @PostMapping("/logout")
@@ -92,7 +69,7 @@ public class UserController {
 
         // 2. 세션이 없거나 세션 내 userId가 없는 경우 401 Unauthorized 반환
         if (session == null || session.getAttribute("userId") == null) {
-            return ResponseEntity.status(401).build();
+            throw new UnauthenticatedExecption("로그인이 필요합니다");
         }
 
         // 3. 세션 무효화 (로그아웃 처리)
@@ -107,21 +84,14 @@ public class UserController {
     {
         HttpSession session = request.getSession(false);
         if (session == null || session.getAttribute("userId") == null) {
-            return ResponseEntity.status(401).build();
+            throw new UnauthenticatedExecption("로그인이 필요합니다");
         }
 
         int userId = (int) session.getAttribute("userId");
 
-        try {
-            userService.updateUserInfo(userId, userUpdateRequest);
-            return ResponseEntity.ok().build(); // 성공 시 200 OK
-        } catch (ResourceNotFoundException e) {
-            return ResponseEntity.notFound().build(); // 유저가 없으면 404
-        } catch (ResourceConflictException e) {
-            return ResponseEntity.status(409).build(); // 이메일 중복이면 409
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().build(); // 그 외 에러 500
-        }
+        userService.updateUserInfo(userId, userUpdateRequest);
+        return ResponseEntity.ok().build(); // 성공 시 200 OK
+
         /*### 단계별 상세 설명
 
         1. **세션 검증 (인증 확인)**
@@ -154,7 +124,7 @@ public class UserController {
     ) {
         HttpSession session = request.getSession(false);
         if (session == null || session.getAttribute("userId") == null) {
-            return ResponseEntity.status(401).build();
+            throw new UnauthenticatedExecption("로그인이 필요합니다");
         }
 
         int userId = (int) session.getAttribute("userId");

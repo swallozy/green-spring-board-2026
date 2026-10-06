@@ -26,16 +26,6 @@ public class UserService {
     private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     public void signup(SignupRequest signupRequest) {
-        // 유저네임과 비밀번호가 공백이 아닌지 확인
-        if (signupRequest.getEmail().isBlank() || signupRequest.getPassword().isBlank()) {
-            throw new UserRequestException("Email or password cannot be blank");
-        }
-
-        // 이메일이 사용 중인지 확인
-        if ( userRepository.existsByEmail(signupRequest.getEmail())) {
-            throw new ResourceConflictException("Email already exists");
-        }
-
         // 비밀번호 해싱
         String hashedPassword = passwordEncoder.encode(signupRequest.getPassword());
 
