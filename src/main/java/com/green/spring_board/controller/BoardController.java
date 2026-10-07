@@ -69,8 +69,9 @@ public class BoardController {
         if(session == null || session.getAttribute("userId") == null) {
             throw new UnauthenticatedException("로그인이 필요합니다.");
         }
-        // TODO 18 :: 본인 확인
-        boardService.updateBoard(id, boardUpdateRequest);
+
+        int userId = (int) session.getAttribute("userId");
+        boardService.updateBoard(id, boardUpdateRequest, userId);
         return ResponseEntity.ok(ApiResponse.ok());
     }
 
@@ -93,7 +94,8 @@ public class BoardController {
 
         // 삭제 성공 시 응답 방법 2.
         // 204(No Content) + No Body
-        boardService.deleteBoard(id);
+        int userId = (int) session.getAttribute("userId");
+        boardService.deleteBoard(id, userId);
         return ResponseEntity.ok(ApiResponse.ok());
     }
 }

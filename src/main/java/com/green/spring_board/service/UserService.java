@@ -7,7 +7,7 @@ import com.green.spring_board.dto.UserUpdateRequest;
 import com.green.spring_board.entity.User;
 import com.green.spring_board.exceptions.ResourceConflictException;
 import com.green.spring_board.exceptions.ResourceNotFoundException;
-import com.green.spring_board.exceptions.UnauthenticatedExecption;
+import com.green.spring_board.exceptions.UnauthenticatedException;
 import com.green.spring_board.exceptions.UserRequestException;
 import com.green.spring_board.repository.UserRepository;
 import lombok.AllArgsConstructor;
@@ -47,7 +47,7 @@ public class UserService {
         User user = userOptional.get();
         // 2. 비밀번호가 올바른지 확인
         if(!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
-            throw new UnauthenticatedExecption("Wrong password");
+            throw new UnauthenticatedException("Wrong password");
         }
         // 3. 로그인 성공
         return user.getId();
@@ -73,7 +73,12 @@ public class UserService {
 
 
     public void updateUserInfo(int userId, UserUpdateRequest dto) {
-        User user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        Optional<User> optionalUser = userRepository.findById(userId);
+        if (optionalUser.isEmpty()) {
+            throw new ResourceNotFoundException("사용자를 찾을 수 없습니다.");
+        }
+
+        User user = optionalUser.get();
         if (dto.getEmail() != null && !dto.getEmail().isBlank()) {
             String newEmail = dto.getEmail();
 
@@ -97,7 +102,7 @@ public class UserService {
         if(userOptional.isEmpty()) {
             throw new ResourceNotFoundException("User not found");
         }
-        User user = userOptional.get();
-        userRepository.delete(user);
+        // user 객체를 꺼내지 않고 ID로 바로 삭제
+        userRepository.deleteById(userId);
     }
 }

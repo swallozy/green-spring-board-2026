@@ -2,6 +2,7 @@ package com.green.spring_board.global;
 
 import com.green.spring_board.dto.ApiResponse;
 import com.green.spring_board.exceptions.*;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.lang.reflect.Array;
 import java.util.List;
 
 /**
@@ -20,6 +22,7 @@ import java.util.List;
  * 3. 개별 컨트롤러의 try-catch 코드 중복을 제거하고, 클라이언트에게 일관된 에러 응답 형식을 보장할 수 있습니다.
  */
 @RestControllerAdvice
+@Slf4j
 public class GlobalExceptionHandler {
 
 //    @ExceptionHandler(예외 클래스)
@@ -31,6 +34,11 @@ public class GlobalExceptionHandler {
     // 요청한 데이터, 있어야 할 데이터가 없을 때 공통 처리
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ApiResponse<Void>> handleNotFound(ResourceNotFoundException e) {
+        log.error(e.getMessage(), e);
+        log.info("안녕하세요");
+        log.warn("경고 경고");
+
+
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(ApiResponse.fail(e.getMessage()));
     }
