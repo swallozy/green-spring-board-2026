@@ -1,4 +1,16 @@
 package com.green.spring_board.dto;
 
-public class ViewLikeDetailResponse {
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+import java.util.List;
+
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
+public class LikeDetailResponse {
+    private List<String> LikedUserNames;
 }
