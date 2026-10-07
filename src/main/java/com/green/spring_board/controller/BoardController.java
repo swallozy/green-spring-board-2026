@@ -98,4 +98,20 @@ public class BoardController {
         boardService.deleteBoard(id, userId);
         return ResponseEntity.ok(ApiResponse.ok());
     }
+
+    // 내가 작성한 게시글 목록 조회 API (GET /api/board/me)
+    @GetMapping("/me")
+    public ResponseEntity<ApiResponse<List<BoardResponse>>> getMyBoards(
+            HttpServletRequest httpServletRequest
+    ) {
+        HttpSession session = httpServletRequest.getSession(false);
+        if (session == null || session.getAttribute("userId") == null) {
+            throw new UnauthenticatedException("로그인이 필요합니다.");
+        }
+
+        int userId = (int) session.getAttribute("userId");
+        List<BoardResponse> myBoards = boardService.getMyBoards(userId);
+
+        return ResponseEntity.ok(ApiResponse.ok(myBoards));
+    }
 }

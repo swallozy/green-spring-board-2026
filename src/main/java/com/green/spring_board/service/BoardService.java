@@ -126,4 +126,26 @@ public class BoardService {
 
         boardRepository.deleteById(id);
     }
+
+    // 내가 작성한 게시글 전체 조회
+    public List<BoardResponse> getMyBoards(int userId) {
+        List<Board> boards = boardRepository.findAllByUserId(userId);
+        List<BoardResponse> boardResponses = new ArrayList<>();
+
+        for (Board board : boards) {
+            boardResponses.add(
+                    new BoardResponse(
+                            board.getId(),
+                            board.getTitle(),
+                            board.getContent(),
+                            board.getHits(),
+                            board.getUser().getId(),
+                            board.getUser().getNickname(),
+                            board.getCreatedDatetime(),
+                            board.getUpdatedDatetime()
+                    )
+            );
+        }
+        return boardResponses;
+    }
 }
