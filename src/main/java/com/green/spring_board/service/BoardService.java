@@ -37,6 +37,7 @@ public class BoardService {
                             board.getTitle(),
                             board.getContent(),
                             board.getHits(),
+                            board.getLikeCount(),
                             board.getUser().getId(),
                             board.getUser().getNickname(),
                             board.getCreatedDatetime(),
@@ -64,6 +65,7 @@ public class BoardService {
                 board.getTitle(),
                 board.getContent(),
                 board.getHits(),
+                board.getLikeCount(),
                 board.getUser().getId(),
                 board.getUser().getNickname(),
                 board.getCreatedDatetime(),
@@ -139,6 +141,7 @@ public class BoardService {
                             board.getTitle(),
                             board.getContent(),
                             board.getHits(),
+                            board.getLikeCount(),
                             board.getUser().getId(),
                             board.getUser().getNickname(),
                             board.getCreatedDatetime(),
@@ -165,14 +168,19 @@ public class BoardService {
 
        // 1. 이 유저와 보드로 동일한 좋아요가 있는지 확인
         Optional<Like> likeOptional = likeRepository.findByUserIdAndBoardId(userId, id);
-        if (likeOptional.isEmpty()) { // 없으면 좋아요 추가
+        if (likeOptional.isEmpty()) {
+            // 없으면 좋아요 추가
             Like like = new Like();
             like.setUser(user);
             like.setBoard(board);
             likeRepository.save(like);
+            boardRepository.save(board);
+            board.setLikeCount(board.getLikeCount() + 1);
         } else { // 있으면 좋아요 삭제
             Like like = likeOptional.get();
             likeRepository.deleteById(like.getId());
+            board.setLikeCount(board.getLikeCount() - 1);
+            boardRepository.save(board);
         }
     }
 }
