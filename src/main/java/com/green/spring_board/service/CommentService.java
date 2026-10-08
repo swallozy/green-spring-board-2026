@@ -2,11 +2,11 @@ package com.green.spring_board.service;
 
 import com.green.spring_board.dto.CommentCreateRequest;
 import com.green.spring_board.dto.CommentResponse;
-import com.green.spring_board.dto.CommentUpdateRequest;
 import com.green.spring_board.entity.Board;
 import com.green.spring_board.entity.Comment;
 import com.green.spring_board.entity.User;
 import com.green.spring_board.exceptions.AuthorizationFailureException;
+import com.green.spring_board.exceptions.InvalidStateException;
 import com.green.spring_board.exceptions.ResourceNotFoundException;
 import com.green.spring_board.repository.BoardRepository;
 import com.green.spring_board.repository.CommentRepository;
@@ -25,7 +25,6 @@ public class CommentService {
     private final BoardRepository boardRepository;
     private final UserRepository userRepository;
 
-    // 댓글 등록
     public void createComment(
             CommentCreateRequest commentCreateRequest,
             int userId,
@@ -52,64 +51,65 @@ public class CommentService {
         commentRepository.save(comment);
     }
 
-    // 특정 게시글의 댓글 목록 조회
-    public List<CommentResponse> getComments(int boardId) {
-        Optional<Board> boardOptional = boardRepository.findById(boardId);
-        if (boardOptional.isEmpty()) {
+    public List<CommentResponse> readComments(int boardId){
+        if(!boardRepository.existsById(boardId)){
             throw new ResourceNotFoundException("Board not found");
         }
 
-        List<Comment> comments = commentRepository.findAllByBoardIdOrderByCreatedDatetimeAsc(boardId);
-        List<CommentResponse> responses = new ArrayList<>();
+        List<Comment> comments = commentRepository.findByBoardIdAndIsDeletedFalse(boardId);
+        // 댓글은 가져왔는데, 이걸 이제 CommentResponse 로 변환
 
+        List<CommentResponse> commentResponses = new ArrayList<>();
         for (Comment comment : comments) {
-            responses.add(
-                    new CommentResponse(
-                            comment.getId(),
-                            comment.getContent(),
-                            comment.getUser().getId(),
-                            comment.getUser().getNickname(),
-                            comment.getCreatedDatetime(),
-                            comment.getUpdatedDatetime()
-                    )
-            );
+            CommentResponse commentResponse = new CommentResponse();
+            commentResponse.setCommentId(comment.getId());
+            commentResponse.setContent(comment.getContent());
+            commentResponse.setNickname(comment.getUser().getNickname());
+            commentResponse.setCreatedDatetime(comment.getCreatedDatetime());
+
+            commentResponses.add(commentResponse);
         }
-        return responses;
+
+        return commentResponses;
     }
 
-    // 댓글 수정
-    public void updateComment(int commentId, CommentUpdateRequest commentUpdateRequest, int userId) {
-        Optional<Comment> commentOptional = commentRepository.findById(commentId);
-        if (commentOptional.isEmpty()) {
-            throw new ResourceNotFoundException("Comment not found");
-        }
-
-        Comment comment = commentOptional.get();
-
-        if (comment.getUser().getId() != userId) {
-            throw new AuthorizationFailureException("권한이 없습니다.");
-        }
-
-        if (commentUpdateRequest.getContent() != null && !commentUpdateRequest.getContent().isBlank()) {
-            comment.setContent(commentUpdateRequest.getContent());
-        }
-
-        commentRepository.save(comment);
-    }
-
-    // 댓글 삭제
     public void deleteComment(int commentId, int userId) {
         Optional<Comment> commentOptional = commentRepository.findById(commentId);
         if (commentOptional.isEmpty()) {
             throw new ResourceNotFoundException("Comment not found");
         }
-
         Comment comment = commentOptional.get();
 
-        if (comment.getUser().getId() != userId) {
-            throw new AuthorizationFailureException("권한이 없습니다.");
+        if(comment.getUser().getId() != userId){
+            throw new AuthorizationFailureException("삭제할 권한이 없습니다.");
         }
 
-        commentRepository.deleteById(commentId);
+        comment.setDeleted(true);
+        commentRepository.save(comment);
+    }
+
+    public void updateComment(
+            CommentCreateRequest commentCreateRequest,
+            int commentId,
+            int userId
+    ) {
+        Optional<Comment> commentOptional = commentRepository.findById(commentId);
+        if (commentOptional.isEmpty()) {
+            throw new ResourceNotFoundException("Comment not found");
+        }
+        Comment comment = commentOptional.get();
+
+        if(comment.isDeleted()){
+            throw new ResourceNotFoundException("삭제된 댓글입니다");
+        }
+
+        if(comment.getUser().getId() != userId){
+            throw new AuthorizationFailureException("수정할 권한이 없습니다.");
+        }
+
+        if(commentCreateRequest.getContent() != null){
+            comment.setContent(commentCreateRequest.getContent());
+            commentRepository.save(comment);
+        }
     }
 }

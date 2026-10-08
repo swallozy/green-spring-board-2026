@@ -3,7 +3,6 @@ package com.green.spring_board.controller;
 import com.green.spring_board.dto.ApiResponse;
 import com.green.spring_board.dto.CommentCreateRequest;
 import com.green.spring_board.dto.CommentResponse;
-import com.green.spring_board.dto.CommentUpdateRequest;
 import com.green.spring_board.exceptions.UnauthenticatedException;
 import com.green.spring_board.service.CommentService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -38,20 +37,20 @@ public class CommentController {
         return ResponseEntity.ok(ApiResponse.ok());
     }
 
-    // 2. 특정 게시글의 댓글 목록 조회
+    // 2. 특정 게시글의 댓글 목록 조회 (getComments -> readComments 로 변경)
     @GetMapping("/board/{boardId}/comment")
     public ResponseEntity<ApiResponse<List<CommentResponse>>> getComments(
             @PathVariable int boardId
     ) {
-        List<CommentResponse> comments = commentService.getComments(boardId);
+        List<CommentResponse> comments = commentService.readComments(boardId);
         return ResponseEntity.ok(ApiResponse.ok(comments));
     }
 
-    // 3. 댓글 수정
+    // 3. 댓글 수정 (CommentCreateRequest 타입 및 (request, id, userId) 순서로 변경)
     @PatchMapping("/comment/{id}")
     public ResponseEntity<ApiResponse<Void>> updateComment(
             @PathVariable int id,
-            @Valid @RequestBody CommentUpdateRequest commentUpdateRequest,
+            @Valid @RequestBody CommentCreateRequest commentCreateRequest,
             HttpServletRequest httpServletRequest
     ) {
         HttpSession session = httpServletRequest.getSession(false);
@@ -60,7 +59,7 @@ public class CommentController {
         }
         int userId = (int) session.getAttribute("userId");
 
-        commentService.updateComment(id, commentUpdateRequest, userId);
+        commentService.updateComment(commentCreateRequest, id, userId);
         return ResponseEntity.ok(ApiResponse.ok());
     }
 

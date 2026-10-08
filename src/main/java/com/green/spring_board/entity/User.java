@@ -1,11 +1,11 @@
 package com.green.spring_board.entity;
 
+import com.green.spring_board.global.UserState;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.springframework.data.annotation.CreatedDate;
 
 import java.time.LocalDateTime;
 
@@ -15,7 +15,6 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Getter
 @Setter
-
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -35,4 +34,8 @@ public class User {
 
     @Column(nullable = false, insertable = false, updatable = false)
     private LocalDateTime updatedDatetime;
+
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    private UserState state;
 }
