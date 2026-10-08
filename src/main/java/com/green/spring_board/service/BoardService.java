@@ -12,8 +12,11 @@ import com.green.spring_board.entity.Board;
 import com.green.spring_board.repository.LikeRepository;
 import com.green.spring_board.repository.UserRepository;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -27,8 +30,10 @@ public class BoardService {
     private LikeRepository likeRepository;
 
     // 전체 조회
-    public List<BoardResponse> getAllBoards() {
-        List<Board> boards = boardRepository.findAll();
+    public Page<BoardResponse> getAllBoards(int userId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Board> boards = boardRepository.findAll(pageable);
+
         List<BoardResponse> boardResponses = new ArrayList<>();
 
         for (Board board : boards) {
@@ -39,6 +44,7 @@ public class BoardService {
                             board.getContent(),
                             board.getHits(),
                             board.getLikeCount(),
+                            userId != -1 && likeRepository.existsByUserIdAndBoardId(userId, board.getId()),
                             board.getUser().getId(),
                             board.getUser().getNickname(),
                             board.getCreatedDatetime(),
@@ -46,11 +52,11 @@ public class BoardService {
                     )
             );
         }
-        return boardResponses;
+        return new PageImpl<>(boardResponses, pageable, boards.getTotalElements());
     }
 
     // 상세 조회
-    public BoardResponse getBoard(int id) {
+    public BoardResponse getBoard(int id, int userId) {
         Optional<Board> optionalboard = boardRepository.findById(id);
         if(optionalboard.isEmpty()) {
             // 요청한 게시글을 찾지 못한 경우
@@ -67,6 +73,7 @@ public class BoardService {
                 board.getContent(),
                 board.getHits(),
                 board.getLikeCount(),
+                userId != -1 && likeRepository.existsByUserIdAndBoardId(userId, board.getId()),
                 board.getUser().getId(),
                 board.getUser().getNickname(),
                 board.getCreatedDatetime(),
@@ -143,6 +150,7 @@ public class BoardService {
                             board.getContent(),
                             board.getHits(),
                             board.getLikeCount(),
+                            userId != -1 && likeRepository.existsByUserIdAndBoardId(userId, board.getId()),
                             board.getUser().getId(),
                             board.getUser().getNickname(),
                             board.getCreatedDatetime(),
@@ -185,6 +193,7 @@ public class BoardService {
         }
     }
 
+    // 좋아요 누른 유저 정보 확인
     public LikeDetailResponse getLikeDetail(int id) {
         // 1. 이 게시글에 좋아요 누른 유저 정보들을 Like 테이블에서 싹 가져옴
         List<Like> likes = likeRepository.findByBoardId(id);
