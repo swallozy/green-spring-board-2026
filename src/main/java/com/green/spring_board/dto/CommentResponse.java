@@ -1,0 +1,21 @@
+package com.green.spring_board.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+import java.time.LocalDateTime;
+
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
+public class CommentResponse {
+    private int id;
+    private String content;
+    private int authorId;
+    private String authorNickname;
+    private LocalDateTime createdDatetime;
+    private LocalDateTime updatedDatetime;
+}
