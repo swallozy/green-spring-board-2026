@@ -14,10 +14,8 @@ import lombok.Setter;
 
 public class LoginRequest {
     @NotBlank
-    @Size(min = 10, max = 50)
-    private String email;
+    private String username;
 
     @NotBlank
-    @Size(min = 10)
     private String password;
 }
