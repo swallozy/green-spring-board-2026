@@ -26,6 +26,6 @@ public class RefreshToken {
     @Column(name = "token", nullable = false, length = 1024)
     private String token;
 
-    @Column(name = "expiration_datatime", nullable = false)
-    private LocalDateTime expirationDatatime;
+    @Column(name = "expiration_datetime", nullable = false)
+    private LocalDateTime expirationDatetime;
 }
