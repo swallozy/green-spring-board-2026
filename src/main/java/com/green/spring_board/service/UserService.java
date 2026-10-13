@@ -1,12 +1,14 @@
 package com.green.spring_board.service;
 
 import com.green.spring_board.dto.*;
+import com.green.spring_board.entity.AccessTokenBlacklist;
 import com.green.spring_board.entity.RefreshToken;
 import com.green.spring_board.entity.User;
 import com.green.spring_board.exceptions.ResourceConflictException;
 import com.green.spring_board.exceptions.ResourceNotFoundException;
 import com.green.spring_board.exceptions.UnauthenticatedException;
 import com.green.spring_board.global.UserState;
+import com.green.spring_board.repository.AccessTokenBlacklistRepository;
 import com.green.spring_board.repository.RefreshTokenRepository;
 import com.green.spring_board.repository.UserRepository;
 import com.green.spring_board.security.JwtTokenProvider;
@@ -33,6 +35,7 @@ public class UserService {
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider tokenProvider;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final AccessTokenBlacklistRepository accessTokenBlacklistRepository;
 
     public void signup(SignupRequest signupRequest) {
         // 아이디가 사용 중인지 확인
@@ -97,6 +100,26 @@ public class UserService {
 
         // 3. 로그인 성공
         return new LoginResponse(accessToken, refreshToken);
+    }
+
+    public void logout(String accesstoken) {
+        // 1. 해당 사용자의 리프레시 토큰 무효화
+        // - DB에서 해당 사용자의 리프레시 토큰을 지운다.
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByUsername(username);
+        List<RefreshToken> tokens = refreshTokenRepository.findByUserId(user.getId());
+        refreshTokenRepository.deleteAll(tokens);
+
+        // 2. 해당 사용자의 액세스 토큰 무효화
+        // - DB 내 블랙리스트 테이블에 해당 토큰을 추가한다.
+        // - 만료 이후에는 블랙리스트 해제가 필요하므로 만료일자도 함께 넣는다.
+        Date expiration = tokenProvider.getExpiration(accesstoken);
+        LocalDateTime convertedDateTime = expiration.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
+
+        AccessTokenBlacklist accessTokenBlacklist = new AccessTokenBlacklist();
+        accessTokenBlacklist.setToken(accesstoken);
+        accessTokenBlacklist.setExpirationDatetime(convertedDateTime);
+        accessTokenBlacklistRepository.save(accessTokenBlacklist);
     }
 
     public RefreshResponse refresh(@Valid RefreshRequest refreshRequest) {

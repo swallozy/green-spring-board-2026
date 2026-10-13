@@ -22,6 +22,7 @@ public class JwtTokenProvider {
     // 리프레시 토큰의 유효 기간 (밀리초)
     private static final long REFRESH_TOKEN_VALIDITY = 1000 * 60 * 60 * 24 * 7;
 
+
     public JwtTokenProvider(@Value("${spring.jwt.secret}") String secretKey) {
         this.key = Keys.hmacShaKeyFor(secretKey.getBytes());
     }
